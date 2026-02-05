@@ -165,24 +165,7 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
           </>
         )}
 
-        {/* Pesan panduan awal */}
-        {!isLoading && !query && (
-          <p style={{ 
-            color: 'var(--text-secondary)', 
-            fontWeight: '500', 
-            padding: '3rem 1rem',
-            lineHeight: '1.8'
-          }}>
-            💡 <strong style={{ color: 'var(--color-primary)' }}>Cara Penggunaan:</strong>
-            <br /><br />
-            Ketik <strong>nama</strong> atau <strong>wisma</strong> WBP di kolom pencarian di atas.
-            <br />
-            Hasil akan muncul secara <strong>real-time</strong> saat Anda mengetik!
-            <br /><br />
-            {/* Menggunakan dataWbp.length untuk hitungan akurat tanpa header */}
-            📊 Total data tersedia: <strong style={{ color: 'var(--color-primary)' }}>{dataWbp.length} Warga Binaan</strong>
-          </p>
-        )}
+        {/* Kosongkan area saat belum ada pencarian */}
       </div>
     </div>
   );

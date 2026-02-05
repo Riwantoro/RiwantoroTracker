@@ -124,11 +124,11 @@ const App = () => {
         <div className="footer-content">
           <div className="footer-badge">
             <Shield size={16} />
-            <span>Minkamtib Tracker</span>
+            <span>Riwantoro Tracker</span>
           </div>
           <div className="footer-divider"></div>
           <div className="footer-info">
-            <p>&copy; 2024 All Rights Reserved</p>
+            <p>All rights RiwantoroTech</p>
           </div>
         </div>
         <div className="footer-wave"></div>
