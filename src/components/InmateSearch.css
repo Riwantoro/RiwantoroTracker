@@ -88,57 +88,6 @@ body.dark-mode .search-input:focus {
     transform: translateY(-50%) scale(1.1);
 }
 
-/* === FILTERS === */
-.filter-row {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 1.5rem;
-    text-align: left;
-}
-
-.filter-title {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 700;
-    font-size: 13px;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-}
-
-.filter-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.filter-chip {
-    border: 1.5px solid var(--border-color);
-    background: var(--background-light);
-    color: var(--text-color);
-    padding: 8px 14px;
-    border-radius: 999px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: var(--shadow-sm);
-}
-
-.filter-chip:hover {
-    transform: translateY(-2px);
-    border-color: var(--color-primary);
-}
-
-.filter-chip.active {
-    background: var(--gradient-accent);
-    color: #ffffff;
-    border-color: transparent;
-    box-shadow: var(--shadow-md);
-}
-
 /* === STATS PANEL === */
 .stats-panel {
     background: var(--background-card);
@@ -368,10 +317,6 @@ body.dark-mode .highlight {
         flex-direction: column;
         align-items: flex-start;
         gap: 6px;
-    }
-
-    .filter-chips {
-        gap: 8px;
     }
 
     .search-input {

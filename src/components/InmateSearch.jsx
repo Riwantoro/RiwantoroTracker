@@ -1,16 +1,9 @@
-import React, { useMemo, useState } from 'react';
-import { Search, SlidersHorizontal } from 'lucide-react';
+import React, { useMemo, useDeferredValue } from 'react';
+import { Search } from 'lucide-react';
 import inmatesData from './wbp.json';
 import './InmateSearch.css';
 
 const InmateSearch = ({ query, isLoading, handleInputChange }) => {
-  const [fieldFilters, setFieldFilters] = useState({
-    nama: true,
-    wisma: true,
-    pidana: true,
-    no_registrasi: true,
-  });
-
   // 1. Ambil Key Tanggal
   const dateKey = Object.keys(inmatesData)[0];
   const rawList = inmatesData[dateKey];
@@ -18,13 +11,8 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
   // 2. FIX: Buang Header (Index 0) SEBELUM filter agar tidak mengganggu hasil pencarian
   const dataWbp = rawList.slice(1);
 
-  const activeFields = Object.entries(fieldFilters)
-    .filter(([, isActive]) => isActive)
-    .map(([key]) => key);
-
-  const hasActiveFields = activeFields.length > 0;
-
-  const normalizedQuery = query.trim().toLowerCase();
+  const deferredQuery = useDeferredValue(query);
+  const normalizedQuery = deferredQuery.trim().toLowerCase();
 
   const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -46,21 +34,33 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
     });
   };
 
-  // 3. Filter inmates berdasarkan query (live search)
-  const filteredInmates = dataWbp.filter((inmate) => {
-    if (!normalizedQuery || !hasActiveFields) return false;
-    const searchQuery = normalizedQuery;
+  const normalizedData = useMemo(() => {
+    return dataWbp.map((inmate) => ({
+      raw: inmate,
+      nama: (inmate.nama || "").toLowerCase(),
+      wisma: (inmate.wisma || "").toLowerCase(),
+      pidana: (inmate.pidana || "").toLowerCase(),
+      no_registrasi: (inmate.no_registrasi || "").toLowerCase(),
+    }));
+  }, [dataWbp]);
 
-    return activeFields.some((field) => {
-      const value = inmate[field] ? String(inmate[field]).toLowerCase() : "";
-      return value.includes(searchQuery);
-    });
-  });
+  // 3. Filter inmates berdasarkan query (live search) - di-defer agar typing lebih ringan
+  const filteredInmates = useMemo(() => {
+    if (!normalizedQuery) return [];
+    return normalizedData
+      .filter((inmate) => (
+        inmate.nama.includes(normalizedQuery) ||
+        inmate.wisma.includes(normalizedQuery) ||
+        inmate.pidana.includes(normalizedQuery) ||
+        inmate.no_registrasi.includes(normalizedQuery)
+      ))
+      .map((inmate) => inmate.raw);
+  }, [normalizedData, normalizedQuery]);
 
   const wismaStats = useMemo(() => {
     const counts = dataWbp.reduce((acc, inmate) => {
-      const wisma = (inmate.wisma || "Tidak diketahui").trim();
-      acc[wisma] = (acc[wisma] || 0) + 1;
+      const pidana = (inmate.pidana || "Tidak diketahui").trim();
+      acc[pidana] = (acc[pidana] || 0) + 1;
       return acc;
     }, {});
 
@@ -68,10 +68,6 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 6);
   }, [dataWbp]);
-
-  const toggleFilter = (field) => {
-    setFieldFilters((prev) => ({ ...prev, [field]: !prev[field] }));
-  };
 
   return (
     <div className="inmate-search-container">
@@ -86,52 +82,15 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
         <Search className="search-icon" size={22} />
       </div>
 
-      <div className="filter-row">
-        <div className="filter-title">
-          <SlidersHorizontal size={16} />
-          <span>Filter Pencarian</span>
-        </div>
-        <div className="filter-chips">
-          <button
-            type="button"
-            className={`filter-chip ${fieldFilters.nama ? "active" : ""}`}
-            onClick={() => toggleFilter("nama")}
-          >
-            Nama
-          </button>
-          <button
-            type="button"
-            className={`filter-chip ${fieldFilters.wisma ? "active" : ""}`}
-            onClick={() => toggleFilter("wisma")}
-          >
-            Wisma
-          </button>
-          <button
-            type="button"
-            className={`filter-chip ${fieldFilters.pidana ? "active" : ""}`}
-            onClick={() => toggleFilter("pidana")}
-          >
-            Pidana
-          </button>
-          <button
-            type="button"
-            className={`filter-chip ${fieldFilters.no_registrasi ? "active" : ""}`}
-            onClick={() => toggleFilter("no_registrasi")}
-          >
-            No. Registrasi
-          </button>
-        </div>
-      </div>
-
       <div className="stats-panel">
         <div className="stats-header">
-          <span>Statistik Wisma (Top 6)</span>
+          <span>Statistik Pidana (Top 6)</span>
           <span className="stats-total">Total: {dataWbp.length}</span>
         </div>
         <div className="stats-grid">
-          {wismaStats.map(([wisma, total]) => (
-            <div className="stats-pill" key={wisma}>
-              <span className="stats-name">{wisma}</span>
+          {wismaStats.map(([pidana, total]) => (
+            <div className="stats-pill" key={pidana}>
+              <span className="stats-name">{pidana}</span>
               <span className="stats-count">{total}</span>
             </div>
           ))}
@@ -147,21 +106,11 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
 
       <div className="inmate-display">
         {/* Pesan tidak ditemukan */}
-        {!isLoading && query && (!hasActiveFields || filteredInmates.length === 0) && (
+        {!isLoading && query && filteredInmates.length === 0 && (
           <p>
-            {!hasActiveFields ? (
-              <>
-                ❗ Pilih minimal satu filter pencarian di atas.
-                <br /><br />
-                💡 Coba aktifkan Nama atau Wisma terlebih dulu.
-              </>
-            ) : (
-              <>
-                ❌ Pencarian tidak ditemukan untuk: "<strong>{query}</strong>"
-                <br /><br />
-                💡 Coba gunakan kata kunci lain atau periksa ejaan.
-              </>
-            )}
+            ❌ Pencarian tidak ditemukan untuk: "<strong>{query}</strong>"
+            <br /><br />
+            💡 Coba gunakan kata kunci lain atau periksa ejaan.
           </p>
         )}
 
