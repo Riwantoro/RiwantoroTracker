@@ -16,6 +16,24 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
 
   const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+  const formatDate = (value) => {
+    if (!value) return "";
+    const text = String(value).trim();
+    const match = text.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})$/);
+    if (!match) return text;
+    const [, dayRaw, monthRaw, yearRaw] = match;
+    const day = dayRaw.padStart(2, "0");
+    const month = monthRaw.padStart(2, "0");
+    const year = yearRaw.length === 2 ? `20${yearRaw}` : yearRaw;
+    const months = [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    ];
+    const monthIndex = Number(month) - 1;
+    const monthLabel = months[monthIndex] || month;
+    return `${day} ${monthLabel} ${year}`;
+  };
+
   const highlightText = (text, rawQuery) => {
     if (!rawQuery || !text) return text || "";
     const safeQuery = escapeRegExp(rawQuery);
@@ -152,6 +170,9 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
                   </div>
                   <div style={{ marginBottom: '8px' }}>
                     <strong>🆔 No. Reg:</strong> {highlightText(inmate.no_registrasi, normalizedQuery)}
+                  </div>
+                  <div style={{ marginBottom: '8px' }}>
+                    <strong>📅 Tgl Masuk:</strong> {highlightText(formatDate(inmate.tanggal_masuk), normalizedQuery)}
                   </div>
                   <div style={{ marginBottom: '8px' }}>
                     <strong>🏠 Wisma:</strong> {highlightText(inmate.wisma, normalizedQuery)}
