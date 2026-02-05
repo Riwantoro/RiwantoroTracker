@@ -118,6 +118,23 @@ body.dark-mode .search-input:focus {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 10px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+.stats-grid::-webkit-scrollbar {
+    width: 6px;
+}
+
+.stats-grid::-webkit-scrollbar-track {
+    background: var(--background-light);
+    border-radius: 10px;
+}
+
+.stats-grid::-webkit-scrollbar-thumb {
+    background: var(--color-primary);
+    border-radius: 10px;
 }
 
 .stats-pill {

@@ -57,17 +57,30 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
       .map((inmate) => inmate.raw);
   }, [normalizedData, normalizedQuery]);
 
-  const wismaStats = useMemo(() => {
+  const normalizePidana = (value) => {
+    if (!value) return "Tidak diketahui";
+    const cleaned = String(value).trim();
+    const main = cleaned.split(" - ")[0];
+    return main || cleaned;
+  };
+
+  const pidanaStats = useMemo(() => {
     const counts = dataWbp.reduce((acc, inmate) => {
-      const pidana = (inmate.pidana || "Tidak diketahui").trim();
-      acc[pidana] = (acc[pidana] || 0) + 1;
+      const pidanaRaw = inmate.pidana || "Tidak diketahui";
+      const pidanaKey = normalizePidana(pidanaRaw);
+      const shouldInclude = normalizedQuery
+        ? String(pidanaRaw).toLowerCase().includes(normalizedQuery)
+        : true;
+
+      if (!shouldInclude) return acc;
+
+      acc[pidanaKey] = (acc[pidanaKey] || 0) + 1;
       return acc;
     }, {});
 
     return Object.entries(counts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6);
-  }, [dataWbp]);
+      .sort((a, b) => b[1] - a[1]);
+  }, [dataWbp, normalizedQuery]);
 
   return (
     <div className="inmate-search-container">
@@ -84,11 +97,13 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
 
       <div className="stats-panel">
         <div className="stats-header">
-          <span>Statistik Pidana (Top 6)</span>
+          <span>
+            Statistik Pidana {normalizedQuery ? `(filter: "${normalizedQuery}")` : "(Semua)"}
+          </span>
           <span className="stats-total">Total: {dataWbp.length}</span>
         </div>
         <div className="stats-grid">
-          {wismaStats.map(([pidana, total]) => (
+          {pidanaStats.map(([pidana, total]) => (
             <div className="stats-pill" key={pidana}>
               <span className="stats-name">{pidana}</span>
               <span className="stats-count">{total}</span>
