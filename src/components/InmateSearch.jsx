@@ -151,31 +151,6 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
       .map((inmate) => inmate.raw);
   }, [normalizedData, normalizedQuery, filters, hasActiveFilters]);
 
-  const normalizePidana = (value) => {
-    if (!value) return "Tidak diketahui";
-    const cleaned = String(value).trim();
-    const main = cleaned.split(" - ")[0];
-    return main || cleaned;
-  };
-
-  const pidanaStats = useMemo(() => {
-    const counts = mergedData.reduce((acc, inmate) => {
-      const pidanaRaw = inmate.pidana || "Tidak diketahui";
-      const pidanaKey = normalizePidana(pidanaRaw);
-      const shouldInclude = normalizedQuery
-        ? String(pidanaRaw).toLowerCase().includes(normalizedQuery)
-        : true;
-
-      if (!shouldInclude) return acc;
-
-      acc[pidanaKey] = (acc[pidanaKey] || 0) + 1;
-      return acc;
-    }, {});
-
-    return Object.entries(counts)
-      .sort((a, b) => b[1] - a[1]);
-  }, [mergedData, normalizedQuery]);
-
   return (
     <div className="inmate-search-container">
       <div className="search-container">
@@ -202,23 +177,6 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
           <option value="kosong">Tanggal bebas belum tersedia</option>
         </select>
         {hasActiveFilters && <button className="clear-filters" onClick={() => setFilters({ wisma: '', pidana: '', negara: '', remisi: '', bebas: '' })}>Reset filter</button>}
-      </div>
-
-      <div className="stats-panel">
-        <div className="stats-header">
-          <span>
-            Statistik Pidana {normalizedQuery ? `(filter: "${normalizedQuery}")` : "(Semua)"}
-          </span>
-          <span className="stats-total">Total: {dataWbp.length}</span>
-        </div>
-        <div className="stats-grid">
-          {pidanaStats.map(([pidana, total]) => (
-            <div className="stats-pill" key={pidana}>
-              <span className="stats-name">{pidana}</span>
-              <span className="stats-count">{total}</span>
-            </div>
-          ))}
-        </div>
       </div>
 
       {isLoading && (
