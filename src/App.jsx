@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import InmateSearch from './components/InmateSearch';
 import { Clock, Moon, Sun, Shield } from 'lucide-react';
 import logo from './logo.png';
@@ -6,7 +6,6 @@ import inmatesData from './components/wbp.json';
 
 const App = () => {
   const [query, setQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
 
   const { totalData, lastUpdate } = useMemo(() => {
@@ -33,19 +32,6 @@ const App = () => {
       lastUpdate: formatDateKey(dateKey),
     };
   }, []);
-
-  // Efek untuk loading indicator saat mengetik
-  useEffect(() => {
-    if (query) {
-      setIsLoading(true);
-      const timer = setTimeout(() => {
-        setIsLoading(false);
-      }, 500); // Waktu loading disesuaikan agar lebih responsif (0.5 detik)
-      return () => clearTimeout(timer);
-    } else {
-      setIsLoading(false);
-    }
-  }, [query]);
 
   const handleInputChange = (e) => {
     setQuery(e.target.value);
@@ -115,7 +101,7 @@ const App = () => {
       <main>
         <InmateSearch
           query={query}
-          isLoading={isLoading}
+          isLoading={false}
           handleInputChange={handleInputChange}
         />
       </main>

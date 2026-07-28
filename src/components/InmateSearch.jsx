@@ -12,9 +12,14 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
   // 2. FIX: Buang Header (Index 0) SEBELUM filter agar tidak mengganggu hasil pencarian
   const dataWbp = rawList.slice(1);
 
-  const complexKey = Object.keys(complexData)[0];
-  const complexList = complexKey ? complexData[complexKey] : [];
-  const complexRows = Array.isArray(complexList) ? complexList.slice(1) : [];
+  const complexRows = useMemo(
+    () => {
+      const complexKey = Object.keys(complexData)[0];
+      const complexList = complexKey ? complexData[complexKey] : [];
+      return Array.isArray(complexList) ? complexList.slice(1) : [];
+    },
+    [],
+  );
 
   const deferredQuery = useDeferredValue(query);
   const normalizedQuery = deferredQuery.trim().toLowerCase();
@@ -24,7 +29,7 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
   const formatDate = (value) => {
     if (!value) return "";
     const text = String(value).trim();
-    const matchDMY = text.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})$/);
+    const matchDMY = text.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
     const matchYMD = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
     let day;
     let month;
@@ -77,6 +82,9 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
         masa_2_3: row?.["masa_2/3"] || "",
         vonis: row?.vonis || "",
         nik: row?.nik || "",
+        remisi: row?.remisi || "",
+        kategori_remisi: row?.kategori_remisi || "",
+        tanggal_bebas: row?.tanggal_bebas || "",
       };
       return acc;
     }, {});
@@ -90,6 +98,9 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
         masa_2_3: extra.masa_2_3 || "",
         vonis: extra.vonis || "",
         nik: extra.nik || "",
+        remisi: extra.remisi || "",
+        kategori_remisi: extra.kategori_remisi || "",
+        tanggal_bebas: extra.tanggal_bebas || "",
       };
     });
   }, [dataWbp, complexRows]);
@@ -105,6 +116,9 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
       masa_2_3: (inmate.masa_2_3 || "").toLowerCase(),
       vonis: (inmate.vonis || "").toLowerCase(),
       nik: (inmate.nik || "").toLowerCase(),
+      remisi: (inmate.remisi || "").toLowerCase(),
+      kategori_remisi: (inmate.kategori_remisi || "").toLowerCase(),
+      tanggal_bebas: (inmate.tanggal_bebas || "").toLowerCase(),
     }));
   }, [mergedData]);
 
@@ -120,7 +134,10 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
         inmate.negara.includes(normalizedQuery) ||
         inmate.masa_2_3.includes(normalizedQuery) ||
         inmate.vonis.includes(normalizedQuery) ||
-        inmate.nik.includes(normalizedQuery)
+        inmate.nik.includes(normalizedQuery) ||
+        inmate.remisi.includes(normalizedQuery) ||
+        inmate.kategori_remisi.includes(normalizedQuery) ||
+        inmate.tanggal_bebas.includes(normalizedQuery)
       ))
       .map((inmate) => inmate.raw);
   }, [normalizedData, normalizedQuery]);
@@ -155,7 +172,7 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
       <div className="search-container">
         <input
           type="text"
-          placeholder="🔍 Cari nama, wisma, pidana, atau no. registrasi..."
+          placeholder="🔍 Cari nama, NIK, remisi, wisma, atau no. registrasi..."
           value={query}
           onChange={handleInputChange}
           className="search-input"
@@ -238,6 +255,13 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
                   </div>
                   <div style={{ marginBottom: '8px' }}>
                     <strong>📜 Vonis:</strong> {highlightText(inmate.vonis, normalizedQuery)}
+                  </div>
+                  <div style={{ marginBottom: '8px' }}>
+                    <strong>🎁 Remisi:</strong> {highlightText(inmate.remisi, normalizedQuery) || "-"}
+                    {inmate.kategori_remisi && <> ({highlightText(inmate.kategori_remisi, normalizedQuery)})</>}
+                  </div>
+                  <div style={{ marginBottom: '8px' }}>
+                    <strong>🕊️ Tgl Bebas:</strong> {highlightText(formatDate(inmate.tanggal_bebas), normalizedQuery) || "-"}
                   </div>
                   <div>
                     <strong>🆔 NIK:</strong> {highlightText(inmate.nik, normalizedQuery)}
