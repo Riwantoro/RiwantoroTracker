@@ -215,6 +215,7 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
               {filteredInmates.map((inmate, index) => {
                 const key = inmate.no_registrasi || index;
                 const isExpanded = expanded === key;
+                const isTahanan = /^AIII\//i.test(String(inmate.no_registrasi || '').trim());
                 return (
                   <li key={key} className="suggestion-item result-card">
                     <div className="result-card-header">
@@ -222,13 +223,14 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
                       <span className={`release-badge ${inmate.tanggal_bebas ? 'available' : ''}`}>{inmate.tanggal_bebas ? `Bebas ${formatDate(inmate.tanggal_bebas)}` : 'Tanggal bebas belum tersedia'}</span>
                     </div>
                     <div className="result-core">
+                      {isTahanan && <span className="inmate-status">Tahanan · Belum Vonis</span>}
                       {inmate.wisma && <span>🏠 {highlightText(inmate.wisma, normalizedQuery)}</span>}
                       {inmate.pidana && <span>⚖️ {highlightText(inmate.pidana, normalizedQuery)}</span>}
                       {inmate.tanggal_masuk && <span>📅 Masuk {formatDate(inmate.tanggal_masuk)}</span>}
                     </div>
                     <button className="detail-toggle" onClick={() => setExpanded(isExpanded ? null : key)} aria-expanded={isExpanded}>{isExpanded ? 'Sembunyikan detail' : 'Lihat detail'}</button>
                     {isExpanded && <div className="detail-sections">
-                      {(inmate.vonis || inmate.masa_2_3) && <section><h4>Pidana</h4>{inmate.vonis && <p><b>Vonis</b>{inmate.vonis}</p>}{inmate.masa_2_3 && <p><b>Masa 2/3</b>{formatDate(inmate.masa_2_3)}</p>}</section>}
+                      {((inmate.vonis && !isTahanan) || inmate.masa_2_3) && <section><h4>Pidana</h4>{inmate.vonis && !isTahanan && <p><b>Vonis</b>{inmate.vonis}</p>}{inmate.masa_2_3 && <p><b>Masa 2/3</b>{formatDate(inmate.masa_2_3)}</p>}</section>}
                       {(inmate.remisi || inmate.kategori_remisi) && <section><h4>Remisi</h4>{inmate.remisi && <p><b>Total remisi</b>{inmate.remisi}</p>}{inmate.kategori_remisi && <p><b>Kategori</b>{inmate.kategori_remisi}</p>}</section>}
                       {(inmate.negara || inmate.nik) && <section><h4>Identitas</h4>{inmate.negara && <p><b>Negara</b>{inmate.negara}</p>}{inmate.nik && <p><b>NIK</b>{inmate.nik}</p>}</section>}
                     </div>}
