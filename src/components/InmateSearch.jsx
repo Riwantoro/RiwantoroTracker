@@ -5,7 +5,7 @@ import complexData from './kompleks.json';
 import './InmateSearch.css';
 
 const InmateSearch = ({ query, isLoading, handleInputChange }) => {
-  const [filters, setFilters] = useState({ wisma: '', pidana: '', negara: '', remisi: '', bebas: '' });
+  const [filters, setFilters] = useState({ wisma: '', pidana: '', negara: '', remisi: '' });
   const [expanded, setExpanded] = useState(null);
   // 1. Ambil Key Tanggal
   const dateKey = Object.keys(inmatesData)[0];
@@ -87,7 +87,6 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
         nik: row?.nik || "",
         remisi: row?.remisi || "",
         kategori_remisi: row?.kategori_remisi || "",
-        tanggal_bebas: row?.tanggal_bebas || "",
       };
       return acc;
     }, {});
@@ -103,7 +102,6 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
         nik: extra.nik || "",
         remisi: extra.remisi || "",
         kategori_remisi: extra.kategori_remisi || "",
-        tanggal_bebas: extra.tanggal_bebas || "",
       };
     });
   }, [dataWbp, complexRows]);
@@ -121,7 +119,6 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
       nik: (inmate.nik || "").toLowerCase(),
       remisi: (inmate.remisi || "").toLowerCase(),
       kategori_remisi: (inmate.kategori_remisi || "").toLowerCase(),
-      tanggal_bebas: (inmate.tanggal_bebas || "").toLowerCase(),
     }));
   }, [mergedData]);
 
@@ -140,13 +137,11 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
         inmate.pidana.includes(normalizedQuery) || inmate.no_registrasi.includes(normalizedQuery) ||
         inmate.negara.includes(normalizedQuery) || inmate.masa_2_3.includes(normalizedQuery) ||
         inmate.vonis.includes(normalizedQuery) || inmate.nik.includes(normalizedQuery) ||
-        inmate.remisi.includes(normalizedQuery) || inmate.kategori_remisi.includes(normalizedQuery) ||
-        inmate.tanggal_bebas.includes(normalizedQuery)) &&
+        inmate.remisi.includes(normalizedQuery) || inmate.kategori_remisi.includes(normalizedQuery)) &&
         (!filters.wisma || inmate.wisma === filters.wisma.toLowerCase()) &&
         (!filters.pidana || inmate.pidana === filters.pidana.toLowerCase()) &&
         (!filters.negara || inmate.negara === filters.negara.toLowerCase()) &&
-        (!filters.remisi || inmate.kategori_remisi === filters.remisi.toLowerCase()) &&
-        (!filters.bebas || (filters.bebas === 'tersedia' ? Boolean(inmate.tanggal_bebas) : !inmate.tanggal_bebas))
+        (!filters.remisi || inmate.kategori_remisi === filters.remisi.toLowerCase())
       ))
       .map((inmate) => inmate.raw);
   }, [normalizedData, normalizedQuery, filters, hasActiveFilters]);
@@ -171,12 +166,7 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
             {filterOptions[field].map((value) => <option key={value} value={value}>{value}</option>)}
           </select>
         ))}
-        <select value={filters.bebas} onChange={(event) => setFilters({ ...filters, bebas: event.target.value })}>
-          <option value="">Status tanggal bebas</option>
-          <option value="tersedia">Tanggal bebas tersedia</option>
-          <option value="kosong">Tanggal bebas belum tersedia</option>
-        </select>
-        {hasActiveFilters && <button className="clear-filters" onClick={() => setFilters({ wisma: '', pidana: '', negara: '', remisi: '', bebas: '' })}>Reset filter</button>}
+        {hasActiveFilters && <button className="clear-filters" onClick={() => setFilters({ wisma: '', pidana: '', negara: '', remisi: '' })}>Reset filter</button>}
       </div>
 
       {isLoading && (
@@ -220,7 +210,7 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
                   <li key={key} className="suggestion-item result-card">
                     <div className="result-card-header">
                       <div><span className="result-reg">{highlightText(inmate.no_registrasi, normalizedQuery)}</span><h3>{highlightText(inmate.nama, normalizedQuery)}</h3></div>
-                      <span className={`release-badge ${inmate.tanggal_bebas ? 'available' : ''}`}>{inmate.tanggal_bebas ? `Bebas ${formatDate(inmate.tanggal_bebas)}` : 'Tanggal bebas belum tersedia'}</span>
+                      {inmate.tanggal_ekspirasi && <span className="expiration-badge">Ekspirasi {formatDate(inmate.tanggal_ekspirasi)}</span>}
                     </div>
                     <div className="result-core">
                       {isTahanan && <span className="inmate-status">Tahanan · Belum Vonis</span>}
