@@ -1,10 +1,12 @@
-import React, { useMemo, useDeferredValue } from 'react';
+import React, { useMemo, useDeferredValue, useState } from 'react';
 import { Search } from 'lucide-react';
 import inmatesData from './wbp.json';
 import complexData from './kompleks.json';
 import './InmateSearch.css';
 
 const InmateSearch = ({ query, isLoading, handleInputChange }) => {
+  const [filters, setFilters] = useState({ wisma: '', pidana: '', negara: '', remisi: '', bebas: '' });
+  const [expanded, setExpanded] = useState(null);
   // 1. Ambil Key Tanggal
   const dateKey = Object.keys(inmatesData)[0];
   const rawList = inmatesData[dateKey];
@@ -23,6 +25,7 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
 
   const deferredQuery = useDeferredValue(query);
   const normalizedQuery = deferredQuery.trim().toLowerCase();
+  const hasActiveFilters = Object.values(filters).some(Boolean);
 
   const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -122,25 +125,31 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
     }));
   }, [mergedData]);
 
+  const filterOptions = useMemo(() => {
+    const values = (field) => [...new Set(mergedData.map((item) => String(item[field] || '').trim()).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, 'id'));
+    return { wisma: values('wisma'), pidana: values('pidana'), negara: values('negara'), remisi: values('kategori_remisi') };
+  }, [mergedData]);
+
   // 3. Filter inmates berdasarkan query (live search) - di-defer agar typing lebih ringan
   const filteredInmates = useMemo(() => {
-    if (!normalizedQuery) return [];
+    if (!normalizedQuery && !hasActiveFilters) return [];
     return normalizedData
       .filter((inmate) => (
-        inmate.nama.includes(normalizedQuery) ||
-        inmate.wisma.includes(normalizedQuery) ||
-        inmate.pidana.includes(normalizedQuery) ||
-        inmate.no_registrasi.includes(normalizedQuery) ||
-        inmate.negara.includes(normalizedQuery) ||
-        inmate.masa_2_3.includes(normalizedQuery) ||
-        inmate.vonis.includes(normalizedQuery) ||
-        inmate.nik.includes(normalizedQuery) ||
-        inmate.remisi.includes(normalizedQuery) ||
-        inmate.kategori_remisi.includes(normalizedQuery) ||
-        inmate.tanggal_bebas.includes(normalizedQuery)
+        (!normalizedQuery || inmate.nama.includes(normalizedQuery) || inmate.wisma.includes(normalizedQuery) ||
+        inmate.pidana.includes(normalizedQuery) || inmate.no_registrasi.includes(normalizedQuery) ||
+        inmate.negara.includes(normalizedQuery) || inmate.masa_2_3.includes(normalizedQuery) ||
+        inmate.vonis.includes(normalizedQuery) || inmate.nik.includes(normalizedQuery) ||
+        inmate.remisi.includes(normalizedQuery) || inmate.kategori_remisi.includes(normalizedQuery) ||
+        inmate.tanggal_bebas.includes(normalizedQuery)) &&
+        (!filters.wisma || inmate.wisma === filters.wisma.toLowerCase()) &&
+        (!filters.pidana || inmate.pidana === filters.pidana.toLowerCase()) &&
+        (!filters.negara || inmate.negara === filters.negara.toLowerCase()) &&
+        (!filters.remisi || inmate.kategori_remisi === filters.remisi.toLowerCase()) &&
+        (!filters.bebas || (filters.bebas === 'tersedia' ? Boolean(inmate.tanggal_bebas) : !inmate.tanggal_bebas))
       ))
       .map((inmate) => inmate.raw);
-  }, [normalizedData, normalizedQuery]);
+  }, [normalizedData, normalizedQuery, filters, hasActiveFilters]);
 
   const normalizePidana = (value) => {
     if (!value) return "Tidak diketahui";
@@ -180,6 +189,21 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
         <Search className="search-icon" size={22} />
       </div>
 
+      <div className="quick-filters" aria-label="Filter cepat">
+        {['wisma', 'pidana', 'negara', 'remisi'].map((field) => (
+          <select key={field} value={filters[field]} onChange={(event) => setFilters({ ...filters, [field]: event.target.value })}>
+            <option value="">Semua {field === 'pidana' ? 'pidana' : field === 'remisi' ? 'kategori remisi' : field}</option>
+            {filterOptions[field].map((value) => <option key={value} value={value}>{value}</option>)}
+          </select>
+        ))}
+        <select value={filters.bebas} onChange={(event) => setFilters({ ...filters, bebas: event.target.value })}>
+          <option value="">Status tanggal bebas</option>
+          <option value="tersedia">Tanggal bebas tersedia</option>
+          <option value="kosong">Tanggal bebas belum tersedia</option>
+        </select>
+        {hasActiveFilters && <button className="clear-filters" onClick={() => setFilters({ wisma: '', pidana: '', negara: '', remisi: '', bebas: '' })}>Reset filter</button>}
+      </div>
+
       <div className="stats-panel">
         <div className="stats-header">
           <span>
@@ -206,16 +230,16 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
 
       <div className="inmate-display">
         {/* Pesan tidak ditemukan */}
-        {!isLoading && query && filteredInmates.length === 0 && (
+        {!isLoading && (query || hasActiveFilters) && filteredInmates.length === 0 && (
           <p>
-            ❌ Pencarian tidak ditemukan untuk: "<strong>{query}</strong>"
+            ❌ Data tidak ditemukan.
             <br /><br />
             💡 Coba gunakan kata kunci lain atau periksa ejaan.
           </p>
         )}
 
         {/* Hasil pencarian */}
-        {!isLoading && query && filteredInmates.length > 0 && (
+        {!isLoading && (query || hasActiveFilters) && filteredInmates.length > 0 && (
           <>
             <p style={{ 
               color: 'var(--color-primary)', 
@@ -230,44 +254,29 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
             </p>
             <ul className="suggestions">
               {/* FIX: Hapus .slice(1) disini, langsung map semua hasil filter */}
-              {filteredInmates.map((inmate, index) => (
-                <li key={inmate.no_registrasi || index} className="suggestion-item">
-                  <div style={{ marginBottom: '8px' }}>
-                    <strong>👤 Nama:</strong> {highlightText(inmate.nama, normalizedQuery)}
-                  </div>
-                  <div style={{ marginBottom: '8px' }}>
-                    <strong>🆔 No. Reg:</strong> {highlightText(inmate.no_registrasi, normalizedQuery)}
-                  </div>
-                  <div style={{ marginBottom: '8px' }}>
-                    <strong>📅 Tgl Masuk:</strong> {highlightText(formatDate(inmate.tanggal_masuk), normalizedQuery)}
-                  </div>
-                  <div style={{ marginBottom: '8px' }}>
-                    <strong>🏠 Wisma:</strong> {highlightText(inmate.wisma, normalizedQuery)}
-                  </div>
-                  <div style={{ marginBottom: '8px' }}>
-                    <strong>⚖️ Pidana:</strong> {highlightText(inmate.pidana, normalizedQuery)}
-                  </div>
-                  <div style={{ marginBottom: '8px' }}>
-                    <strong>🌍 Negara:</strong> {highlightText(inmate.negara, normalizedQuery)}
-                  </div>
-                  <div style={{ marginBottom: '8px' }}>
-                    <strong>🗓️ Masa 2/3:</strong> {highlightText(formatDate(inmate.masa_2_3), normalizedQuery)}
-                  </div>
-                  <div style={{ marginBottom: '8px' }}>
-                    <strong>📜 Vonis:</strong> {highlightText(inmate.vonis, normalizedQuery)}
-                  </div>
-                  <div style={{ marginBottom: '8px' }}>
-                    <strong>🎁 Remisi:</strong> {highlightText(inmate.remisi, normalizedQuery) || "-"}
-                    {inmate.kategori_remisi && <> ({highlightText(inmate.kategori_remisi, normalizedQuery)})</>}
-                  </div>
-                  <div style={{ marginBottom: '8px' }}>
-                    <strong>🕊️ Tgl Bebas:</strong> {highlightText(formatDate(inmate.tanggal_bebas), normalizedQuery) || "-"}
-                  </div>
-                  <div>
-                    <strong>🆔 NIK:</strong> {highlightText(inmate.nik, normalizedQuery)}
-                  </div>
-                </li>
-              ))}
+              {filteredInmates.map((inmate, index) => {
+                const key = inmate.no_registrasi || index;
+                const isExpanded = expanded === key;
+                return (
+                  <li key={key} className="suggestion-item result-card">
+                    <div className="result-card-header">
+                      <div><span className="result-reg">{highlightText(inmate.no_registrasi, normalizedQuery)}</span><h3>{highlightText(inmate.nama, normalizedQuery)}</h3></div>
+                      <span className={`release-badge ${inmate.tanggal_bebas ? 'available' : ''}`}>{inmate.tanggal_bebas ? `Bebas ${formatDate(inmate.tanggal_bebas)}` : 'Tanggal bebas belum tersedia'}</span>
+                    </div>
+                    <div className="result-core">
+                      {inmate.wisma && <span>🏠 {highlightText(inmate.wisma, normalizedQuery)}</span>}
+                      {inmate.pidana && <span>⚖️ {highlightText(inmate.pidana, normalizedQuery)}</span>}
+                      {inmate.tanggal_masuk && <span>📅 Masuk {formatDate(inmate.tanggal_masuk)}</span>}
+                    </div>
+                    <button className="detail-toggle" onClick={() => setExpanded(isExpanded ? null : key)} aria-expanded={isExpanded}>{isExpanded ? 'Sembunyikan detail' : 'Lihat detail'}</button>
+                    {isExpanded && <div className="detail-sections">
+                      {(inmate.vonis || inmate.masa_2_3) && <section><h4>Pidana</h4>{inmate.vonis && <p><b>Vonis</b>{inmate.vonis}</p>}{inmate.masa_2_3 && <p><b>Masa 2/3</b>{formatDate(inmate.masa_2_3)}</p>}</section>}
+                      {(inmate.remisi || inmate.kategori_remisi) && <section><h4>Remisi</h4>{inmate.remisi && <p><b>Total remisi</b>{inmate.remisi}</p>}{inmate.kategori_remisi && <p><b>Kategori</b>{inmate.kategori_remisi}</p>}</section>}
+                      {(inmate.negara || inmate.nik) && <section><h4>Identitas</h4>{inmate.negara && <p><b>Negara</b>{inmate.negara}</p>}{inmate.nik && <p><b>NIK</b>{inmate.nik}</p>}</section>}
+                    </div>}
+                  </li>
+                );
+              })}
             </ul>
           </>
         )}
