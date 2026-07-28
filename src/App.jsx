@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import './App.css';
 import InmateSearch from './components/InmateSearch';
 import { Clock, LockKeyhole, LogOut, Moon, Shield, Sun, User } from 'lucide-react';
 import logo from './logo.png';
