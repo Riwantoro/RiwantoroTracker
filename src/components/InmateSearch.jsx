@@ -203,7 +203,7 @@ const InmateSearch = ({ query, isLoading, handleInputChange }) => {
             <ul className="suggestions">
               {/* FIX: Hapus .slice(1) disini, langsung map semua hasil filter */}
               {filteredInmates.map((inmate, index) => {
-                const key = inmate.no_registrasi || index;
+                const key = `${inmate.no_registrasi || "record"}-${index}`;
                 const isExpanded = expanded === key;
                 const isTahanan = /^AIII\//i.test(String(inmate.no_registrasi || '').trim());
                 return (
